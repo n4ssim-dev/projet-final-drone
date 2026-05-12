@@ -12,7 +12,7 @@ def scoring():
     df['score'] = np.nan
     # urgence = (croissance * besoin) / risques
 
-    # ratio urgence(?) / risque(risque)
+    # ratio urgence / risque(risque)
     for index, row in df.iterrows():
         croissance = df.at[index, 'croissance']
         besoins = df.at[index, 'besoins']
@@ -25,27 +25,27 @@ def scoring():
 df = scoring()
 
 # TODO : Classer les zones par priorité
-
 # TODO : Identifier la zone prioritaire
-zone_score = {
-    A: 0,
-    B: 0,
-    C: 0,
-    D: 0,
-    E: 0
-}
 
-def zone_score(dataframe, zone_score):
+# Rend un dictionnaire incluant la somme des scores 
+def zone_score(dataframe):
+    scores = {
+        'A': 0,
+        'B': 0,
+        'C': 0,
+        'D': 0,
+        'E': 0
+    }
 
-    for key, value in zone_score.items():
-        for index, row in dataframe.iterrows():
-            value += float(row['score'])
+    for _, row in dataframe.iterrows():
+        zone = row['zone']
+        if zone in scores:
+            scores[zone] += round(row['score'] / 10) # Moyenne par zone
 
-    return zone_score;
+    return scores
 
 zone_score = zone_score(dataframe=df)
 print(zone_score)
-
 
 
 # TODO : Convertir le dataframe en tableur csv (livrable final)
