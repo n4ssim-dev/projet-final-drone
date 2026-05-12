@@ -1,5 +1,6 @@
 import pandas as pd
 import numpy as np
+import matplotlib.pyplot as plt
 
 epi = pd.read_csv("epidemie_nettoye.csv")
 dr = pd.read_csv("drones_nettoye.csv")
@@ -18,35 +19,47 @@ def scoring():
         besoins = df.at[index, 'besoins']
         risques = df.at[index, 'risques']
 
-        df.at[index, 'score'] = round((croissance * besoins) / risques, 1)
+        df.at[index, 'score'] = round((croissance * 1.1 + besoins * 0.90) - risques * 0.70, 2)
 
     return df;
 
 df = scoring()
 
 # TODO : Classer les zones par priorité
-# TODO : Identifier la zone prioritaire
+# & Identifier la zone prioritaire
 
-# Rend un dictionnaire incluant la somme des scores 
-def zone_score(dataframe):
-    scores = {
-        'A': 0,
-        'B': 0,
-        'C': 0,
-        'D': 0,
-        'E': 0
-    }
-
-    for _, row in dataframe.iterrows():
-        zone = row['zone']
-        if zone in scores:
-            scores[zone] += round(row['score'] / 10) # Moyenne par zone
-
-    return scores
-
-zone_score = zone_score(dataframe=df)
-print(zone_score)
-
+zone_score = df.groupby("zone")["score"].mean().round(2).sort_values(ascending=False)
 
 # TODO : Convertir le dataframe en tableur csv (livrable final)
 df.to_csv("decision_finale.csv", index=False)
+
+# TODO : Tableau score moyen par zone
+zone_stats = df.groupby("zone")[["croissance", "besoins", "risques"]].mean()
+
+croissance_med = zone_stats["croissance"].median()
+besoins_med    = zone_stats["besoins"].median()
+risques_med    = zone_stats["risques"].median()
+
+tick_labels = []
+
+# Assigne le type de croissance/besoin/risques(haut ou bas) au df zone_stats pour chaque zones
+for zone in zone_score.index:
+    c = "Haute croissance" if zone_stats.loc[zone, "croissance"] >= croissance_med else "Faible croissance"
+    b = "Haut besoin" if zone_stats.loc[zone, "besoins"] >= besoins_med else "Faible besoin"
+    r = "Haut risque" if zone_stats.loc[zone, "risques"] >= risques_med else "Faible risque"
+    tick_labels.append(f"{zone}\n{c}\n{b}\n{r}")
+
+print(zone_stats)
+
+plt.figure(figsize=(12, 8))
+plt.bar(zone_score.index, zone_score.values, align='center')
+plt.xticks(range(len(zone_score.index)), tick_labels, fontsize=8)
+
+plt.title("Score moyen par zones.")
+plt.ylabel("Score moyen")
+plt.grid(True)
+plt.tight_layout()
+plt.savefig('score_par_region.png')
+plt.close()
+
+# TODO : BONUS 1: 
